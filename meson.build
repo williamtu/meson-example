@@ -1,3 +1,4 @@
+# $env:CC="clang"
 # .\meson59.exe --reconfigure build -Dpkg_config_path=C:\temp\dpdk\lib\pkgconfig\
 # ninja -C build
 project('example', 'c', 
@@ -24,17 +25,22 @@ add_project_link_arguments('-lmincore', language: 'c')
 add_project_link_arguments('-ladvapi32', '-lsetupapi', language: 'c')
 add_project_link_arguments('-ldbghelp', language: 'c')
 
-# dpdk_lib_deps = dependency('libdpdk', required : true, static : true) 
+use_dpdk_pkgconfig = true
+dpdk_lib_deps = []
 
+if use_dpdk_pkgconfig
+  # remember: -Dpkg_config_path=C:\temp\dpdk\lib\pkgconfig\
+  dpdk_lib_deps = dependency('libdpdk', required : true, static : true) 
+else
 dpdk_libs = ['rte_eal', 'rte_ethdev', 'rte_hash', 'rte_kvargs', 'rte_mbuf', 'rte_net',
   'rte_mempool', 'rte_pci', 'rte_bus_pci', 'rte_ring', 'rte_cmdline', 'rte_telemetry',
   'rte_rcu']
 
-dpdk_lib_deps = []
 foreach lib:dpdk_libs
     dpdk_lib_deps += cc.find_library(lib, required : true, static : true,
       dirs: dpdk_lib_path + '\lib')
 endforeach
+endif
 
 mapfile = meson.project_source_root() + '/mylib.map'
 vflag = '-Wl'.format(meson.current_source_dir(), mapfile)
